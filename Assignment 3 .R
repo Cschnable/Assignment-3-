@@ -2,9 +2,10 @@ getwd()
 #1
 read.csv("StormEvents_details-ftp_v1.0_d1998_c20220425.csv")
 Storms=read.csv("StormEvents_details-ftp_v1.0_d1998_c20220425.csv")
-
+head(Storms,2)
+View(Storms)
 #2
-new_columns <-Storms %>% c("BEGIN_YEARMONTH","BEGIN_DAY","BEGIN_TIME","END_YEARMONTH","END_DAY","END_TIME","EPISODE_ID","EVENT_ID","STATE","STATE_FIPS","CZ_NAME","CZ_TYPE","CZ_FIPS","EVENT_TYPE","SOURCE","START_LAT","END_LAT","START_LON","END_LON")
+new_columns<-c("BEGIN_YEARMONTH","BEGIN_DAY","BEGIN_TIME","END_YEARMONTH","END_DAY","END_TIME","EPISODE_ID","EVENT_ID","STATE","STATE_FIPS","CZ_NAME","CZ_TYPE","CZ_FIPS","EVENT_TYPE","SOURCE","BEGIN_LAT","END_LAT","BEGIN_LON","END_LON")
 newdata = Storms[new_columns]
 head(newdata)
 #3
@@ -19,27 +20,30 @@ newdata = newdata %>% mutate(STATE = str_to_title(STATE), CZ_NAME = str_to_title
 newdata = newdata %>% filter(CZ_TYPE =="C") %>% select(-CZ_TYPE)
 
 #6
-newdata = newdata %>% mutate(STATE_FIPS = str_pad(STATE_FIPS, width = 2,side = "left",pad = "0"), CZ_FIPS = str_pad(CZ_FIPS, width=3, side= "left", pad="0")
-                      unite("FIPS", STATE_FIPS, CZ_FIPS, sep="0")
-
+library(stringr)
+str_pad(newdata$STATE_FIPS, width=3,side="left", pad = "0")
+unite(newdata,"FIPS",c(STATE_FIPS, CZ_FIPS), sep = "_", remove=FALSE)
+view(newdata)
 #7
-newdata = newdata %>% rename_all(newdata,tolower)
-
+newdata = newdata %>% rename_all(tolower)
+view(newdata)
 #8
 data("state")
 us_state_info<-data.frame(state=state.name, region=state.region, area=state.area)
 
 #9
-Events.1998<- data.frame(table(newdata$STATE))
-merge(x=Events.1998,y=us_state_info,by.x="state", by.y="state")
-newset1<-rename(Events.1998, c("state"="Var1"))
-merged.state<-(mutate_all(df, toupper))
-merge(x=Events.1998,y=us_state_info,by.x="state", by.y="state")
+table(newdata$state)
+Events1998<-data.frame(table(newdata$state))
+view(Events1998)
+merged<-merge(x=newset1,y=us_state_info,by.x="state", by.y="state")
+newset1<-rename(Events1998, c("state"="Var1"))
+view(merged)
 
 #10
 library(ggplot2)
-storm_plot<-ggplot(merged.state, aes(x=area,y=n)) +
-  geom_point(aes(color=region)) +
+storm_plot<-ggplot(merged, aes(x = area, y = Freq)) +
+  geom_point(aes(color = region)) +
   labs(x = "Land area (square miles)",
-       y = "# of storm events in 2017")
+       y = "# of storm events in 1998")
 storm_plot
+
